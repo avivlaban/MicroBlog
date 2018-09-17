@@ -1,29 +1,62 @@
 const Joi = require('joi');
 const mongoose = require('mongoose');
-const {userSchema} = require('./user');
+const {userNameSchema} = require('./user');
 
 const Post = mongoose.model('Posts', new mongoose.Schema({
     title: {
-      type: String,
-      required: true,
-      trim: true, 
-      minlength: 5,
-      maxlength: 255
+        type: String, 
+        requires: true,
+        minlength: 0,
+        maxlength: 255
     },
-    genre: { 
-      type: genreSchema,  
+    autor: {
+      type: userNameSchema,
       required: true
     },
-    numberInStock: { 
-      type: Number, 
-      required: true,
-      min: 0,
-      max: 255
+    rank: { 
+        type: Number,  
+        required: true
     },
-    dailyRentalRate: { 
-      type: Number, 
-      required: true,
-      min: 0,
-      max: 255
+    upVotes: { 
+      type: Array,  
+      required: true
+    },
+    downVotes: { 
+        type: Array,  
+        required: true
+    },
+    upVotesCount: {
+        type: Number,
+        required: true
+    },
+    downVotesCount: {
+        type: Number,
+        required: true
+    },
+    dateCreated: { 
+        type: Date, 
+        required: true
+    },
+    dateUpdated: { 
+        type: Date, 
+        required: true
+    },
+    content: {
+        type: String,
+        required: true,
+        minlength: 1,
+        maxlength: 1000,
     }
   }));
+
+function validatePost(post) {
+    const schema = {
+        title: Joi.string().min(5).max(50).required(),
+        content: Joi.string().min(1).max(1000).required()
+    };
+  
+    return Joi.validate(post, schema);
+};
+
+  exports.Post = Post; 
+  exports.validatePost = validatePost;

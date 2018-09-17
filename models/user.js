@@ -1,23 +1,35 @@
 const Joi = require('joi');
 const mongoose = require('mongoose');
 
-const User = mongoose.model('Users', new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true, 
-    minlength: 5,
-    maxlength: 255
-  },
-  dateCreated: { 
-    type: Date, 
-    required: true
-  },
-  isActive: {
-      type: Boolean,
-      required: true
-  }
-}));
+const userSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true, 
+        minlength: 5,
+        maxlength: 255
+      },
+      dateCreated: { 
+        type: Date, 
+        required: true
+      },
+      isActive: {
+          type: Boolean,
+          required: true
+      }
+  });
+
+  const userNameSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true, 
+        minlength: 5,
+        maxlength: 255
+      }
+  });
+
+const User = mongoose.model('Users', userSchema);
 
 function validateUser(user) {
   const schema = {
@@ -26,6 +38,7 @@ function validateUser(user) {
 
   return Joi.validate(user, schema);
 }
-
+exports.userSchema = userSchema;
+exports.userNameSchema = userNameSchema;
 exports.User = User; 
 exports.validateUser = validateUser;
