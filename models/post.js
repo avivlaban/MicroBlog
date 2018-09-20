@@ -58,5 +58,14 @@ function validatePost(post) {
     return Joi.validate(post, schema);
 };
 
+function validateIdFormat(id){
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+        return true;
+    }else{
+        return false;
+    }
+}
+
   exports.Post = Post; 
   exports.validatePost = validatePost;
+  exports.validateIdFormat = validateIdFormat;
