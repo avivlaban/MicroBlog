@@ -98,7 +98,7 @@ router.put('/upvote/post/:postId/user/:userId', async (req, res) => {
     }else if(isUserInDownVoteList && !isUserInUpVoteList){
         // User DownVoted before - first remove it and then perform UpVote
         post = removeUserFromDownVoteList(post, userId);
-        post = addUserToUpVoteList(post);
+        post = addUserToUpVoteList(post, userId);
     }else{
         // Error - The user has alredy upvoted and downvoted this post - illegal combination
         res.status(500).send();
