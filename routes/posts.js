@@ -200,7 +200,7 @@ function removeUserFromUpVoteList(post, voterId){
     // Removing the voting user id from the list
     upVotesList.remove(voterId);
     // Updating the list size
-    post.upVotes -= 1;
+    post.upVotesCount -= 1;
     console.log(`User ${voterId}' upvote was removed from Post ${post._id}.`);
 
     return post;
