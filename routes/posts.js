@@ -1,5 +1,6 @@
 const {User, validateUser} = require('../models/user');
 const {Post, validatePost, validateIdFormat} = require('../models/post');
+const {calculateRank} = require('../rank');
 const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
@@ -37,6 +38,7 @@ router.post('/create/:userId', async (req, res) => {
     res.send(post);
 });
 
+// TODO: Add User check
 router.put('/update/:postId', async (req, res) => {
     const { error } = validatePost(req.body); 
     if (error) return res.status(400).send(error.details[0].message);
@@ -54,7 +56,7 @@ router.put('/update/:postId', async (req, res) => {
             content: req.body.content,
             dateUpdated: Date.now()
         });
-    res.send("Post was updated");
+    res.send(post);
 });
 
 router.put('/upvote/post/:postId/user/:userId', async (req, res) => {
@@ -177,7 +179,8 @@ function addUserToUpVoteList(post, voterId){
     upVotesList.push(voterId);
     // Updating the list size
     post.upVotesCount += 1;
-    console.log(`User ${voterId} upvoted Post ${post._id}.`);
+    post.rank = calculateRank(post.upVotesCount, post.downVotesCount, post.dateCreated);
+    console.log(`User ${voterId} upvoted Post ${post._id}. New Rank: ${post.rank}`);
 
     return post;
 }
@@ -189,7 +192,8 @@ function addUserToDownVoteList(post, voterId){
     downVotesList.push(voterId);
     // Updating the list size
     post.downVotesCount += 1;
-    console.log(`User ${voterId} upvoted Post ${post._id}.`);
+    post.rank = calculateRank(post.upVotesCount, post.downVotesCount, post.dateCreated);
+    console.log(`User ${voterId} downvoted Post ${post._id}. New Rank: ${post.rank}`);
 
     return post;
 }
@@ -212,10 +216,12 @@ function removeUserFromDownVoteList(post, voterId){
     // Removing the voting user id from the list
     downVotesList.remove(voterId);
     // Updating the list size
-    post.downVotes -= 1;
+    post.downVotesCount -= 1;
     console.log(`User ${voterId}' downvote was removed from Post ${post._id}.`);
 
     return post;
 }
+
+
 
 module.exports = router;
