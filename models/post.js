@@ -66,6 +66,8 @@ function validateIdFormat(id){
     }
 }
 
+
+
   exports.Post = Post; 
   exports.validatePost = validatePost;
   exports.validateIdFormat = validateIdFormat;
