@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
 router.get('/:userId', async (req, res) => {
     // Return the list of all users
     const user = await User.findById(req.params.userId);
-    if(!user) return res.status(400).status("User does not exist")
+    if(!user) return res.status(400).status({"message" : "User does not exist"})
 
     res.send(user);
 });

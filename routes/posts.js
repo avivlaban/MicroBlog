@@ -7,25 +7,32 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-    res.status(200).send('Test Completed');
+    res.status(200).send({"message" : 'Hello! Start Posting!'});
   });
 
 router.get('/topposts/:count', async (req, res) => {
-    const postsResult = topPosts.getTopPosts(req.params.count).then((pr) => {
-            console.log(`Get top posts: ${pr} ` )
-    res.status(200).send(pr);
-    });
+    return new Promise((resolve, reject) => {
+        // Get the Top Posts as requseted by :count
+        const postsResult = topPosts.getTopPosts(req.params.count).then((pr) => {
 
+        if(pr){
+            resolve(res.status(200).send(pr));
+        }else{
+            reject(res.status(500).send());
+        }
+        });
+    });
 });
 
 router.post('/create/:userId', async (req, res) => {
+    // Check if the post is a valid JSON
     const { error } = validatePost(req.body); 
     if (error) return res.status(400).send(error.details[0].message);
+
     // Make Sure User Exists
-    console.log("User id is: ", req.params.userId);
     const user = await User.findById(req.params.userId);
     // If Not - Return 404
-    if(!user) return res.status(404).send('User does not exist and therefore can not post');
+    if(!user) return res.status(404).send({"message:" : 'User does not exist and therefore can not post'});
     // If Yes - Create a new Post
     let post = new Post({
         title: req.body.title,
@@ -47,25 +54,37 @@ router.post('/create/:userId', async (req, res) => {
     res.send(post);
 });
 
-// TODO: Add User check
-router.put('/update/:postId', async (req, res) => {
+router.put('/update/:postId/user/:userId', async (req, res) => {
+    // Check if the post is a valid JSON
     const { error } = validatePost(req.body); 
     if (error) return res.status(400).send(error.details[0].message);
+
+    // Make Sure User Exists
+    const user = await User.findById(req.params.userId);
+    // If Not - Return 404
+    if(!user) return res.status(404).send({"message:" : 'User does not exist and therefore can not post'});
+
     // Make Sure Post Exists
     let post = await Post.findById(req.params.postId);
     // If Not - Return 404
-    if(!post) return res.status(404).send('A post with the given id does not exists');
+    if(!post) return res.status(404).send({"message:" : 'A post with the given id does not exists'});
     // If Yes - Create a new Post
-    console.log("Post id is: ", req.params.postId);
-    console.log("New Title is: ", req.body.title);
-    console.log("New Post is: ", req.body.content);
-    post = await Post.findOneAndUpdate(req.params.postId, 
-        {
-            title: req.body.title,
-            content: req.body.content,
-            dateUpdated: Date.now()
-        });
-    res.send(post);
+    const updatePost = new Promise((resolve,reject) => {
+        try{
+            post = Post.findOneAndUpdate(req.params.postId,
+            {
+                title: req.body.title,
+                content: req.body.content,
+                dateUpdated: Date.now()
+            }, {new: true}).then(result => {
+                resolve(result)});
+        }catch(err) {
+            reject("Failed Updating Post with id: " + postId);
+        }
+
+    })
+    .then(post => {res.send(post)});
+
 });
 
 router.put('/upvote/post/:postId/user/:userId', async (req, res) => {
@@ -76,9 +95,9 @@ router.put('/upvote/post/:postId/user/:userId', async (req, res) => {
         // Make Sure Post Exists
         post = await Post.findById(postId);
         // If Not - Return 404
-        if(!post) return res.status(404).send('A post with the given id does not exists');
+        if(!post) return res.status(404).send({"message:" : 'A post with the given id does not exists'});
     }else{
-        return res.status(404).send('A post with the given id does not exists');
+        return res.status(404).send({"message:" : 'A post with the given id does not exists'});
     }
     let user;
     if(validateIdFormat(userId) === true){
@@ -86,9 +105,9 @@ router.put('/upvote/post/:postId/user/:userId', async (req, res) => {
         console.log("User id is: ", req.params.userId);
         user = await User.findById(req.params.userId);
         // If Not - Return 404
-        if(!user) return res.status(404).send('User does not exist and therefore can not upvote');
+        if(!user) return res.status(404).send({"message:" : 'User does not exist and therefore can not upvote'});
     }else{
-        return res.status(404).send('User does not exist and therefore can not upvote')
+        return res.status(404).send({"message:" : 'User does not exist and therefore can not upvote'})
     }
     //If Yes - Get Upvotes Array
     console.log("Post is:", post);
@@ -105,7 +124,7 @@ router.put('/upvote/post/:postId/user/:userId', async (req, res) => {
         // User Already UpVoted the Post
         const errorMessage = `User ${user._id} already UpVoted Post ${post._id}. A user can only do it once`;
         console.log(errorMessage);
-        res.status(405).send(errorMessage);
+        res.status(405).send({"message:" : errorMessage});
     }else if(isUserInDownVoteList && !isUserInUpVoteList){
         // User DownVoted before - first remove it and then perform UpVote
         post = removeUserFromDownVoteList(post, userId);
@@ -128,18 +147,18 @@ router.put('/downvote/post/:postId/user/:userId', async (req, res) => {
         // Make Sure Post Exists
         post = await Post.findById(postId);
         // If Not - Return 404
-        if(!post) return res.status(404).send('A post with the given id does not exists');
+        if(!post) return res.status(404).send({"message:" : 'A post with the given id does not exists'});
     }else{
-        return res.status(404).send('A post with the given id does not exists');
+        return res.status(404).send({"message:" : 'A post with the given id does not exists'});
     }
     let user;
     if(validateIdFormat(userId) === true){
         // Make Sure User Exists
         user = await User.findById(req.params.userId);
         // If Not - Return 404
-        if(!user) return res.status(404).send('User does not exist and therefore can not downvote');
+        if(!user) return res.status(404).send({"message:" : 'User does not exist and therefore can not downvote'});
     }else{
-        return res.status(404).send('User does not exist and therefore can not downvote')
+        return res.status(404).send({"message:" : 'User does not exist and therefore can not downvote'})
     }
     //If Yes - Get Downvote Array
     console.log("Post is:", post);
@@ -230,7 +249,5 @@ function removeUserFromDownVoteList(post, voterId){
 
     return post;
 }
-
-
 
 module.exports = router;
