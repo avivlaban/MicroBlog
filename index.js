@@ -27,10 +27,6 @@ test().then(() => {
 
         app.listen(port, () => {
           console.log(`Listening on port ${port}...`);
-          const postsResult = topPosts.getTopPosts(0).then((pr) => {
-                  console.log(`Get top posts: ${pr} ` )
-              });
-          //console.log(`Get top posts: ${topPosts.getTopPosts(2)} ` )
         });
 });
 

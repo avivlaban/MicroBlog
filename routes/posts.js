@@ -1,6 +1,7 @@
 const {User, validateUser} = require('../models/user');
 const {Post, validatePost, validateIdFormat} = require('../models/post');
 const {calculateRank} = require('../rank');
+const topPosts = require('../topPosts');
 const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
@@ -8,6 +9,14 @@ const router = express.Router();
 router.get('/', async (req, res) => {
     res.status(200).send('Test Completed');
   });
+
+router.get('/topposts/:count', async (req, res) => {
+    const postsResult = topPosts.getTopPosts(req.params.count).then((pr) => {
+            console.log(`Get top posts: ${pr} ` )
+    res.status(200).send(pr);
+    });
+
+});
 
 router.post('/create/:userId', async (req, res) => {
     const { error } = validatePost(req.body); 
