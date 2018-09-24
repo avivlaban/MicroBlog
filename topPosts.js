@@ -13,12 +13,6 @@ var sortedArray = new SortedArray([], sortForPostsByRank);
 var updateList = [];
 
 
-
-// Constructorv
-//  1. load for DB
-//  2. loop function for every x time:
-//
-
 async function start(){
     const posts = await loadPostsFromDB();
     updateTopPosts(posts);
@@ -32,7 +26,7 @@ async function start(){
     }, 60 * 1000);
 }
 
-function updateTopPosts(posts){
+async function updateTopPosts(posts){
     console.log("These are the posts: ", posts);
     let lastPost;
     posts.forEach(function(post) {
@@ -48,17 +42,37 @@ function updateTopPosts(posts){
     console.log("Sorted Array:", sortedArray);
 
     console.log("Removing object");
-    removePost(lastPost);
+    //removePost(lastPost);
     console.log("Sorted Array:", sortedArray);
     console.log("Hash:", dict);
     console.log("Done");
 }
 
-function updateLists(){
+async function updateLists(){
     updateList.forEach(function(post) {
         console.log("Updating post:", post);
         updatePost(post);
     });
+}
+
+async function getTopPosts(numberOfPosts){
+    let resultList = [];
+    console.log("Sorted Array is now: " + sortedArray.array.length);
+    if(numberOfPosts < sortedArray.array.length){
+        for(i = 0; i < numberOfPosts; i++){
+            const postId = sortedArray.array[i].postId;
+            const post = dict[postId];
+            resultList.push(post);
+        }
+        return resultList;
+    }else{
+        for(i = 0; i < sortedArray.array.length; i++){
+            const postId = sortedArray.array[i].postId;
+            const post = dict[postId];
+            resultList.push(post);
+        }
+        return await resultList;
+    }
 }
 
 // load function(maxPosts) -> 1. Get from DB, 2. load posts to hash, 3. load posts.rank to Heap
@@ -66,10 +80,6 @@ async function loadPostsFromDB(){
     return await loadFromDb();
 
 }
-
-// Get x Posts:
-// 1. if(x <= maxPosts) return x posts from this class
-// 2. else get the new x posts from db (load functions)
 
 // Update post in data structure
 async function updatePost(post){
@@ -110,8 +120,13 @@ async function loadFromDb(){
     return await Post.find().sort({ rank: 1}).limit(maxPosts);
 }
 
-exports.start = start();
+exports.init = async () => {
+    await start();
+}
 
+exports.getTopPosts = async (numberOfPosts) => {
+    return await getTopPosts(numberOfPosts);
+}
 
 
 
