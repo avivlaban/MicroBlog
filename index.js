@@ -1,32 +1,26 @@
-const mongoose = require('mongoose');
 const express = require('express');
-const posts = require('./routes/posts');
-const users = require('./routes/users');
+const winston = require('winston');
 const topPosts = require('./topPosts');
 
 const app = express();
+require('./startup/logging')();
+require('./startup/routes')(app);
+require('./startup/db')();
+//require('./startup/validation')();
 
-mongoose.connect('mongodb://localhost/microblog')
-  .then(() => console.log('Connected to MongoDB...'))
-  .catch(err => console.error('Could not connect to MongoDB...'));
-
-app.use(express.json());
-app.use('/api/posts', posts);
-app.use('/api/users', users);
+// const p = Promise.reject(new Error('Calling an error!'));
+// p.then(() => console.log('Done'));
+//throw new Error('Testing Errors !');
 
 const port = process.env.PORT || 3000;
-
-//const test = await topPosts.init();
-
 const test = async () =>
 {
     return await topPosts.init();
 }
 
 test().then(() => {
-
         app.listen(port, () => {
-          console.log(`Listening on port ${port}...`);
+          winston.info(`Listening on port ${port}...`);
         });
 });
 
