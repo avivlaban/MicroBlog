@@ -5,12 +5,12 @@ const {Post} = require('./models/post');
 const maxPosts = 1000;
 
 // Hash Table for posts <key,value> => <postId><Post>
-var dict = [];
+let dict = [];
 
 // Sorted Array structure => Sort by rank. Node contains postId also.
-var sortedArray = new SortedArray([], sortForPostsByRank);
+let sortedArray = new SortedArray([], sortForPostsByRank);
 
-var updateList = [];
+let updateList = [];
 
 
 async function start(){
@@ -27,7 +27,9 @@ async function start(){
 }
 
 async function addPostToUpdateList(post){
+    console.log("Before Debug Updated list: " + updateList);
     updateList.push(post);
+    console.log("After Debug Updated list: " + updateList);
 }
 
 async function updateTopPosts(posts){
@@ -118,6 +120,10 @@ exports.init = async () => {
 
 exports.getTopPosts = async (numberOfPosts) => {
     return await getTopPosts(numberOfPosts);
+}
+
+exports.addPostToUpdateList = async (post) => {
+    return await addPostToUpdateList(post);
 }
 
 

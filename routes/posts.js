@@ -50,6 +50,7 @@ router.post('/create/:userId', async (req, res) => {
         content: req.body.content
     });
     post = await post.save();
+    topPosts.addPostToUpdateList(post);
 
     res.send(post);
 });
@@ -81,6 +82,7 @@ router.put('/update/:postId/user/:userId', async (req, res) => {
         }catch(err) {
             reject("Failed Updating Post with id: " + postId);
         }
+        topPosts.addPostToUpdateList(post);
 
     })
     .then(post => {res.send(post)});
@@ -135,6 +137,7 @@ router.put('/upvote/post/:postId/user/:userId', async (req, res) => {
     }
 
     const result = await post.save();
+    topPosts.addPostToUpdateList(post);
     console.log("Post UpVoted Updated:", result);
     res.send(result);
 });
@@ -185,6 +188,7 @@ router.put('/downvote/post/:postId/user/:userId', async (req, res) => {
     }
 
     const result = await post.save();
+    topPosts.addPostToUpdateList(post);
     console.log("Post Downvoted Updated:", result);
     res.send(result);
 
