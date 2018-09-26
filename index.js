@@ -8,17 +8,13 @@ require('./startup/routes')(app);
 require('./startup/db')();
 //require('./startup/validation')();
 
-// const p = Promise.reject(new Error('Calling an error!'));
-// p.then(() => console.log('Done'));
-//throw new Error('Testing Errors !');
-
 const port = process.env.PORT || 3000;
-const test = async () =>
+const loadTopPostsFromDb = async () =>
 {
     return await topPosts.init();
 }
 
-test().then(() => {
+loadTopPostsFromDb().then(() => {
         app.listen(port, () => {
           winston.info(`Listening on port ${port}...`);
         });

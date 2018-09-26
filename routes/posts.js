@@ -1,196 +1,137 @@
+
 const {User, validateUser} = require('../models/user');
-const {Post, validatePost, validateIdFormat} = require('../models/post');
+const {Post, validatePost} = require('../models/post');
+const {Event, validateCreateEvent, validateUpdateEvent, validateVoteEvent} = require('../models/event');
+const {validateIdFormat} = require('../models/utils');
 const {calculateRank} = require('../rank');
 const topPosts = require('../topPosts');
 const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
+const { getRedisClient } = require('../startup/cache');
+
+const client = getRedisClient();
+
 
 router.get('/', async (req, res) => {
-    res.status(200).send({"message" : 'Hello! Start Posting!'});
+
   });
 
-router.get('/topposts/:count', async (req, res) => {
-    return new Promise((resolve, reject) => {
-        // Get the Top Posts as requseted by :count
-        const postsResult = topPosts.getTopPosts(req.params.count).then((pr) => {
+router.get('/topposts/', async (req, resp) => {
 
-        if(pr){
-            resolve(res.status(200).send(pr));
-        }else{
-            reject(res.status(500).send());
+    client.get("topposts/", async (err, result) => {
+        if (result != null) {
+            console.log("Cache hit for ");
+            resp.send(result);
+        } else {
+            console.log("Cache missed for ");
+            let posts;
+            try{
+                posts = await Post.find().sort({ rank: 1}).limit(1000);
+                console.log("Posts are: " + posts);
+                try{
+                    client.setex("topposts/", 300, JSON.stringify(posts));
+                    resp.send(posts);
+                }catch(err){
+                    console.log(err);
+                    resp.status(202).send();
+                }
+            }catch(err){
+                console.log(err);
+                resp.status(202).send();
+            }
         }
-        });
-    });
+})
 });
 
-router.post('/create/:userId', async (req, res) => {
+router.post('/create', async (req, res) => {
     // Check if the post is a valid JSON
-    const { error } = validatePost(req.body); 
-    if (error) return res.status(400).send(error.details[0].message);
+    const { error } = validateCreateEvent(req.body);
+    if (error) return res.status(400).send(error.details[0]);
 
-    // Make Sure User Exists
-    const user = await User.findById(req.params.userId);
-    // If Not - Return 404
-    if(!user) return res.status(404).send({"message:" : 'User does not exist and therefore can not post'});
-    // If Yes - Create a new Post
-    let post = new Post({
-        title: req.body.title,
-        autor: {
-            _id: user._id,
-            name: user.name
-        },
-        rank: 0,
-        upVotes: [],
-        downVotes: [], 
-        downVotesCount: 0,
-        upVotesCount: 0,
-        dateCreated: Date.now(),
-        dateUpdated: Date.now(),
-        content: req.body.content
+    // Create an Event for later processing
+    let event = new Event({
+        action: 'CREATE',
+        eventBody: req.body,
+        dateCreated: Date.now()
     });
-    post = await post.save();
-    topPosts.addPostToUpdateList(post);
 
-    res.send(post);
+    // Save Event in DB
+    try{
+        event = await event.save();
+        res.status(200).send("Create Event Recieved");
+    }catch(error){
+        winston.error("Failed saving a CREATE event to DB: " + error);
+        res.status(500).send(error);
+    }
 });
 
-router.put('/update/:postId/user/:userId', async (req, res) => {
+router.put('/update', async (req, res) => {
     // Check if the post is a valid JSON
-    const { error } = validatePost(req.body); 
-    if (error) return res.status(400).send(error.details[0].message);
+    const { error } = validateUpdateEvent(req.body);
+    if (error) return res.status(400).send(error.details[0]);
 
-    // Make Sure User Exists
-    const user = await User.findById(req.params.userId);
-    // If Not - Return 404
-    if(!user) return res.status(404).send({"message:" : 'User does not exist and therefore can not post'});
+    // Create an Event for later processing
+    let event = new Event({
+        action: 'UPDATE',
+        eventBody: req.body,
+        dateCreated: Date.now()
+    });
 
-    // Make Sure Post Exists
-    let post = await Post.findById(req.params.postId);
-    // If Not - Return 404
-    if(!post) return res.status(404).send({"message:" : 'A post with the given id does not exists'});
-    // If Yes - Create a new Post
-    const updatePost = new Promise((resolve,reject) => {
-        try{
-            post = Post.findOneAndUpdate(req.params.postId,
-            {
-                title: req.body.title,
-                content: req.body.content,
-                dateUpdated: Date.now()
-            }, {new: true}).then(result => {
-                resolve(result)});
-        }catch(err) {
-            reject("Failed Updating Post with id: " + postId);
-        }
-        topPosts.addPostToUpdateList(post);
-
-    })
-    .then(post => {res.send(post)});
+    // Save Event in DB
+    try{
+        event = await event.save();
+        res.status(200).send("Update Event Recieved");
+    }catch(error){
+        winston.error("Failed saving an UPDATE event to DB: " + error);
+        res.status(500).send(error);
+    }
 
 });
 
-router.put('/upvote/post/:postId/user/:userId', async (req, res) => {
-    const userId = req.params.userId;
-    const postId = req.params.postId
-    let post;
-    if(validateIdFormat(postId) === true){
-        // Make Sure Post Exists
-        post = await Post.findById(postId);
-        // If Not - Return 404
-        if(!post) return res.status(404).send({"message:" : 'A post with the given id does not exists'});
-    }else{
-        return res.status(404).send({"message:" : 'A post with the given id does not exists'});
+router.put('/upvote', async (req, res) => {
+
+    // Check if the post is a valid JSON
+    const { error } = validateVoteEvent(req.body);
+    if (error) return res.status(400).send(error.details[0]);
+
+    // Create an Event for later processing
+    let event = new Event({
+        action: 'UPVOTE',
+        eventBody: req.body,
+        dateCreated: Date.now()
+    });
+
+    // Save Event in DB
+    try{
+        event = await event.save();
+        res.status(200).send("UpVote Event Recieved");
+    }catch(error){
+        winston.error("Failed saving an UPVOTE event to DB: " + error);
+        res.status(500).send(error);
     }
-    let user;
-    if(validateIdFormat(userId) === true){
-        // Make Sure User Exists
-        console.log("User id is: ", req.params.userId);
-        user = await User.findById(req.params.userId);
-        // If Not - Return 404
-        if(!user) return res.status(404).send({"message:" : 'User does not exist and therefore can not upvote'});
-    }else{
-        return res.status(404).send({"message:" : 'User does not exist and therefore can not upvote'})
-    }
-    //If Yes - Get Upvotes Array
-    console.log("Post is:", post);
-
-    const isUserInUpVoteList = (post.upVotes.indexOf(userId) > -1);
-    const isUserInDownVoteList = (post.downVotes.indexOf(userId) > -1);
-    console.log(`Is in upVote: ${isUserInUpVoteList}, is in downvote:${isUserInDownVoteList}`)
-
-
-    if(!isUserInDownVoteList && !isUserInUpVoteList){
-        // Updating User's UpVote
-        post = addUserToUpVoteList(post, userId);
-    }else if(!isUserInDownVoteList && isUserInUpVoteList){
-        // User Already UpVoted the Post
-        const errorMessage = `User ${user._id} already UpVoted Post ${post._id}. A user can only do it once`;
-        console.log(errorMessage);
-        res.status(405).send({"message:" : errorMessage});
-    }else if(isUserInDownVoteList && !isUserInUpVoteList){
-        // User DownVoted before - first remove it and then perform UpVote
-        post = removeUserFromDownVoteList(post, userId);
-        post = addUserToUpVoteList(post, userId);
-    }else{
-        // Error - The user has alredy upvoted and downvoted this post - illegal combination
-        res.status(500).send();
-    }
-
-    const result = await post.save();
-    topPosts.addPostToUpdateList(post);
-    console.log("Post UpVoted Updated:", result);
-    res.send(result);
 });
 
-router.put('/downvote/post/:postId/user/:userId', async (req, res) => {
-    const userId = req.params.userId;
-    const postId = req.params.postId
-    let post;
-    if(validateIdFormat(postId) === true){
-        // Make Sure Post Exists
-        post = await Post.findById(postId);
-        // If Not - Return 404
-        if(!post) return res.status(404).send({"message:" : 'A post with the given id does not exists'});
-    }else{
-        return res.status(404).send({"message:" : 'A post with the given id does not exists'});
+router.put('/downvote', async (req, res) => {
+    // Check if the post is a valid JSON
+    const { error } = validateVoteEvent(req.body);
+    if (error) return res.status(400).send(error.details[0]);
+
+    // Create an Event for later processing
+    let event = new Event({
+        action: 'DOWNVOTE',
+        eventBody: req.body,
+        dateCreated: Date.now()
+    });
+
+    // Save Event in DB
+    try{
+        event = await event.save();
+        res.status(200).send("DownVote Event Recieved");
+    }catch(error){
+        winston.error("Failed saving a DOWNVOTE event to DB: " + error);
+        res.status(500).send(error);
     }
-    let user;
-    if(validateIdFormat(userId) === true){
-        // Make Sure User Exists
-        user = await User.findById(req.params.userId);
-        // If Not - Return 404
-        if(!user) return res.status(404).send({"message:" : 'User does not exist and therefore can not downvote'});
-    }else{
-        return res.status(404).send({"message:" : 'User does not exist and therefore can not downvote'})
-    }
-    //If Yes - Get Downvote Array
-    console.log("Post is:", post);
-
-    const isUserInUpVoteList = (post.upVotes.indexOf(userId) > -1);
-    const isUserInDownVoteList = (post.downVotes.indexOf(userId) > -1);
-
-
-    if(!isUserInDownVoteList && !isUserInUpVoteList){
-        // Updating User's DownVote
-        post = addUserToDownVoteList(post, userId);
-    }else if(isUserInDownVoteList && !isUserInUpVoteList){
-        // User Already DownVotes the Post
-        const errorMessage = `User ${user._id} already Downvoted Post ${post._id}. A user can only do it once`;
-        console.log(errorMessage);
-        res.status(405).send(errorMessage);
-    }else if(!isUserInDownVoteList && isUserInUpVoteList){
-        // User UpVoted before - first remove it and then perform DownVote
-        post = removeUserFromUpVoteList(post, userId);
-        post = addUserToDownVoteList(post, userId);
-    }else{
-        // Error - The user has alredy upvoted and downvoted this post - illegal combination
-        res.status(500).send();
-    }
-
-    const result = await post.save();
-    topPosts.addPostToUpdateList(post);
-    console.log("Post Downvoted Updated:", result);
-    res.send(result);
 
 });
 

@@ -10,6 +10,8 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:userId', async (req, res) => {
+    const { error } = validateUser(req.params.userId);
+    if (error) return res.status(400).send(error.details[0].message);
     // Return the list of all users
     const user = await User.findById(req.params.userId);
     if(!user) return res.status(400).status({"message" : "User does not exist"})
@@ -18,8 +20,6 @@ router.get('/:userId', async (req, res) => {
 });
 
 router.post('/create', async (req, res) => {
-    const { error } = validateUser(req.body); 
-    if (error) return res.status(400).send(error.details[0].message);
 
     let user = new User({ 
         name: req.body.name,
