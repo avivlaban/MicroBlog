@@ -3,7 +3,7 @@ const {User, validateUser} = require('../models/user');
 const {Post, validatePost} = require('../models/post');
 const {Event, validateCreateEvent, validateUpdateEvent, validateVoteEvent} = require('../models/event');
 const {validateIdFormat} = require('../models/utils');
-const {calculateRank} = require('../rank');
+const winston = require('winston');
 const topPosts = require('../topPosts');
 const mongoose = require('mongoose');
 const express = require('express');
@@ -53,7 +53,8 @@ router.post('/create', async (req, res) => {
     let event = new Event({
         action: 'CREATE',
         eventBody: req.body,
-        dateCreated: Date.now()
+        dateCreated: Date.now(),
+        isActive: true
     });
 
     // Save Event in DB
@@ -75,7 +76,8 @@ router.put('/update', async (req, res) => {
     let event = new Event({
         action: 'UPDATE',
         eventBody: req.body,
-        dateCreated: Date.now()
+        dateCreated: Date.now(),
+        isActive: true
     });
 
     // Save Event in DB
@@ -99,7 +101,8 @@ router.put('/upvote', async (req, res) => {
     let event = new Event({
         action: 'UPVOTE',
         eventBody: req.body,
-        dateCreated: Date.now()
+        dateCreated: Date.now(),
+        isActive: true
     });
 
     // Save Event in DB
@@ -121,7 +124,8 @@ router.put('/downvote', async (req, res) => {
     let event = new Event({
         action: 'DOWNVOTE',
         eventBody: req.body,
-        dateCreated: Date.now()
+        dateCreated: Date.now(),
+        isActive: true
     });
 
     // Save Event in DB
@@ -134,65 +138,5 @@ router.put('/downvote', async (req, res) => {
     }
 
 });
-
-
-function didUserVote(array, userId){
-    const indexOfUserInList = array.indexOf(userId);
-    if(indexOfUserInList > -1){
-        return true;
-    }else{
-        return false;
-    }
-};
-
-function addUserToUpVoteList(post, voterId){
-    // Get UpVotes List
-    let upVotesList = post.upVotes;
-    // Adding the voting user id to the list
-    upVotesList.push(voterId);
-    // Updating the list size
-    post.upVotesCount += 1;
-    post.rank = calculateRank(post.upVotesCount, post.downVotesCount, post.dateCreated);
-    console.log(`User ${voterId} upvoted Post ${post._id}. New Rank: ${post.rank}`);
-
-    return post;
-}
-
-function addUserToDownVoteList(post, voterId){
-    // Get DownVotes List
-    let downVotesList = post.downVotes;
-    // Adding the voting user id to the list
-    downVotesList.push(voterId);
-    // Updating the list size
-    post.downVotesCount += 1;
-    post.rank = calculateRank(post.upVotesCount, post.downVotesCount, post.dateCreated);
-    console.log(`User ${voterId} downvoted Post ${post._id}. New Rank: ${post.rank}`);
-
-    return post;
-}
-
-function removeUserFromUpVoteList(post, voterId){
-    // Get UpVotes List
-    let upVotesList = post.upVotes;
-    // Removing the voting user id from the list
-    upVotesList.remove(voterId);
-    // Updating the list size
-    post.upVotesCount -= 1;
-    console.log(`User ${voterId}' upvote was removed from Post ${post._id}.`);
-
-    return post;
-}
-
-function removeUserFromDownVoteList(post, voterId){
-    // Get DownVotes List
-    let downVotesList = post.downVotes;
-    // Removing the voting user id from the list
-    downVotesList.remove(voterId);
-    // Updating the list size
-    post.downVotesCount -= 1;
-    console.log(`User ${voterId}' downvote was removed from Post ${post._id}.`);
-
-    return post;
-}
 
 module.exports = router;

@@ -14,6 +14,10 @@ const Event = mongoose.model('Events', new mongoose.Schema({
     dateCreated: {
         type: Date,
         required: true
+    },
+    isActive: {
+        type: Boolean,
+        required: true
     }
 }));
 
