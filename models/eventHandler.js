@@ -4,9 +4,13 @@ const { User } = require('./user');
 const { Event } = require('./event');
 const winston = require('winston');
 const {calculateRank} = require('../rank');
+const { getRedisClient } = require('../startup/cache');
+
+const client = getRedisClient();
 
 const timeOutForNewPostsCheckInSeconds = 15;
 const maxEventsProcessing = 10;
+const maxPostsInCache = 5;
 
 
 module.exports.startListening = async function(){
@@ -17,6 +21,9 @@ module.exports.startListening = async function(){
         let events = [];
         let singleEvent;
         let counter = 0;
+
+        // Update Top events in cache
+        updateTopResultsInCache(maxPostsInCache);
         // Get Events to Process from DB
         try{
             do{
@@ -299,4 +306,17 @@ async function removeUserFromDownVoteList(post, voterId){
     console.log(`User ${voterId}' downvote was removed from Post ${post._id}.`);
 
     return post;
+}
+
+async function updateTopResultsInCache(numberOfResults){
+    try{
+        const posts = await Post.find().sort({ rank: -1}).limit(numberOfResults);
+        client.setex("topposts/", 300, JSON.stringify(posts));
+        winston.log('Updated TopResults in cache successfully');
+        console.log(posts);
+        return true;
+    }catch(err){
+        winston.error("Failed updated TopResults in cache, Reason: " + err);
+        return false;
+    }
 }
