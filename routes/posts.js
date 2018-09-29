@@ -1,14 +1,12 @@
 
-const {User, validateUser} = require('../models/user');
-const {Post, validatePost} = require('../models/post');
-const {Event, validateCreateEvent, validateUpdateEvent, validateVoteEvent} = require('../models/event');
-const {validateIdFormat} = require('../models/utils');
+const {Post} = require('../models/post');
+const {Event, validateCreateEvent, validateUpdateEvent, validateVoteEvent} = require('../Events/event');
 const winston = require('winston');
-const topPosts = require('../topPosts');
 const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
 const { getRedisClient } = require('../startup/cache');
+const {eventAction} = require('../events/eventsUtils');
 
 const client = getRedisClient();
 
@@ -17,9 +15,9 @@ router.get('/', async (req, res) => {
 
   });
 
-router.get('/topposts/', async (req, resp) => {
+router.get('/top/', async (req, resp) => {
 
-    client.get("topposts/", async (err, result) => {
+    client.get("top/", async (err, result) => {
         if (result != null) {
             console.log("Cache hit for ");
             resp.send(result);
@@ -30,7 +28,7 @@ router.get('/topposts/', async (req, resp) => {
                 posts = await Post.find().sort({ rank: 1}).limit(1000);
                 console.log("Posts are: " + posts);
                 try{
-                    client.setex("topposts/", 300, JSON.stringify(posts));
+                    client.setex("top/", 300, JSON.stringify(posts));
                     resp.send(posts);
                 }catch(err){
                     console.log(err);
@@ -51,7 +49,7 @@ router.post('/create', async (req, res) => {
 
     // Create an Event for later processing
     let event = new Event({
-        action: 'CREATE',
+        action: eventAction.CREATE,
         eventBody: req.body,
         dateCreated: Date.now(),
         isActive: true
@@ -74,7 +72,7 @@ router.put('/update', async (req, res) => {
 
     // Create an Event for later processing
     let event = new Event({
-        action: 'UPDATE',
+        action: eventAction.UPDATE,
         eventBody: req.body,
         dateCreated: Date.now(),
         isActive: true
@@ -99,7 +97,7 @@ router.put('/upvote', async (req, res) => {
 
     // Create an Event for later processing
     let event = new Event({
-        action: 'UPVOTE',
+        action: eventAction.UPVOTE,
         eventBody: req.body,
         dateCreated: Date.now(),
         isActive: true
@@ -122,7 +120,7 @@ router.put('/downvote', async (req, res) => {
 
     // Create an Event for later processing
     let event = new Event({
-        action: 'DOWNVOTE',
+        action: eventAction.DOWNVOTE,
         eventBody: req.body,
         dateCreated: Date.now(),
         isActive: true

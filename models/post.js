@@ -18,22 +18,8 @@ const Post = mongoose.model('Posts', new mongoose.Schema({
         type: Number,  
         required: true
     },
-    upVotes: { 
-      type: Array,  
-      required: true
-    },
-    downVotes: { 
-        type: Array,  
-        required: true
-    },
-    upVotesCount: {
-        type: Number,
-        required: true
-    },
-    downVotesCount: {
-        type: Number,
-        required: true
-    },
+    votes: [{upVotes: Array, downVotes: Array, upVotesCount: Number, downVotesCount: Number}],
+
     dateCreated: { 
         type: Date, 
         required: true
@@ -47,6 +33,10 @@ const Post = mongoose.model('Posts', new mongoose.Schema({
         required: true,
         minlength: 1,
         maxlength: 1000,
+    },
+    isProcessed: {
+        type: Boolean,
+        required: true
     }
   }));
 

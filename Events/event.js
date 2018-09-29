@@ -4,8 +4,8 @@ const mongoose = require('mongoose');
 const regexIdValidationForDB = '/^[0-9a-fA-F]{24}$/';
 const Event = mongoose.model('Events', new mongoose.Schema({
     action: {
-        type: String,
-        enum : ['CREATE','UPDATE', 'UPVOTE', 'DOWNVOTE']
+        type: Number,
+        requires: true
     },
     eventBody: {
         type: Array,

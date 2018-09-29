@@ -1,16 +1,17 @@
 const mongoose = require('mongoose');
-const { Post } = require('./post');
-const { User } = require('./user');
+const { Post } = require('../models/post');
+const { User } = require('../models/user');
 const { Event } = require('./event');
 const winston = require('winston');
-const {calculateRank} = require('../rank');
+const {calculateRank} = require('./rank');
 const { getRedisClient } = require('../startup/cache');
+const {calculateVotes, eventAction} = require('./eventsUtils');
 
 const client = getRedisClient();
 
-const timeOutForNewPostsCheckInSeconds = 15;
+const timeOutForNewPostsCheckInSeconds = 10;
 const maxEventsProcessing = 10;
-const maxPostsInCache = 5;
+const maxPostsInCache = 1000;
 
 
 module.exports.startListening = async function(){
@@ -34,7 +35,6 @@ module.exports.startListening = async function(){
                 }
             }while(singleEvent && (counter < maxEventsProcessing));
             if(events.length > 0) {
-                console.log('Events are: ' + events);
                 winston.info('Sucessfully got events from DB');
             }else{
                 winston.info('No Events to update');
@@ -53,16 +53,16 @@ module.exports.startListening = async function(){
 
                     console.log("Event is: " + event);
                     switch (event.action) {
-                        case ("CREATE"):
+                        case (eventAction.CREATE):
                         createPostAction(event);
                         break;
-                        case ('UPDATE'):
+                        case (eventAction.UPDATE):
                         updatePostAction(event);
                         break;
-                        case ('UPVOTE'):
+                        case (eventAction.UPVOTE):
                         upvotePostAction(event);
                         break;
-                        case ('DOWNVOTE'):
+                        case (eventAction.DOWNVOTE):
                         downvotePostAction(event);
                         break;
                         default:
@@ -100,13 +100,11 @@ async function createPostAction(event){
                 name: user.name
             },
             rank: calculateRank(0, 0, Date.now()),
-            upVotes: [],
-            downVotes: [],
-            downVotesCount: 0,
-            upVotesCount: 0,
+            votes: [{upVotes: [], downVotes: [], upVotesCount: 0, downVotesCount: 0}],
             dateCreated: Date.now(),
             dateUpdated: Date.now(),
-            content: event.eventBody[0].content
+            content: event.eventBody[0].content,
+            isProcessed: false
         });
         post = await post.save();
         winston.info(`A new Post was successfully created: ${post._id}`);
@@ -134,21 +132,14 @@ async function updatePostAction(event){
         return;
     }
 
-    // Make sure post exists
-    post = await Post.findById(event.eventBody[0].postId);
-    if(!post){
-        winston.error(`Post ${event.eventBody[0].postId} does not exist and therefore can not be updated. ${event}` );
-        return;
-    }
-
-    console.log("Post is: " + post);
-
     // Update the post to DB
     try{
-        post.title = event.eventBody[0].title;
-        post.content = event.eventBody[0].content;
-        post.dateUpdated = Date.now()
-        post = await post.save();
+        post = await Post.findOneAndUpdate({_id: event.eventBody[0].postId}, {
+            title: event.eventBody[0].title,
+            content: event.eventBody[0].content,
+            dateUpdated: Date.now()
+        },{new: true});
+
         if (post) {
             winston.info(`Post ${post._id} was successfully updated`);
         }
@@ -173,6 +164,7 @@ function removeEventFromDb(id){
     console.log(`Event ${id} deleted successfully`);
 }
 
+
 async function upvotePostAction(event){
     // Make sure user exists
     const user = await User.findById(event.eventBody[0].userId);
@@ -181,35 +173,35 @@ async function upvotePostAction(event){
         return;
     }
 
-    // Make sure post exists
-    let post = await Post.findById(event.eventBody[0].postId);
+    // Make sure that post exists in DB and ready to be processed
+    let post = await Post.findOneAndUpdate({_id: event.eventBody[0].postId, isProcessed: false}, {$set: {isProcessed: true}}, {new: true});
     if(!post){
-        winston.error(`Post ${event.eventBody[0].postId} does not exist and therefore can not be updated. ${event}` );
-        return;
+        // Make sure that post exists in DB
+        post = await Post.findById(event.eventBody[0].postId);
+        if(!post){
+            winston.error(`Post ${event.eventBody[0].postId} does not exist and therefore can not be updated. ${event}`);
+            return;
+        }else{
+            const enableEvent = await Event.findOneAndUpdate({_id: event._id}, {isActive: true});
+            if(enableEvent){
+                winston.info(`Event ${event._id} will be processed next cycle`);
+            }else{
+                winston.error(`Failed enabling event ${event._id} for next cycle`);
+            }
+            return;
+        }
     }
+    console.log("Post to Edit is: " + post);
+    post.votes = await calculateVotes(eventAction.UPVOTE, post.votes, user._id);
+    post.rank =  await calculateRank(post.votes[0].upVotes.length, post.votes[0].downVotes.length, post.dateCreated);
+    post.isProcessed = false;
 
-    // Check if user already voted before and where
-    const isUserInUpVoteList = (post.upVotes.indexOf(user._id) > -1);
-    const isUserInDownVoteList = (post.downVotes.indexOf(user._id) > -1);
-
-    if(!isUserInDownVoteList && !isUserInUpVoteList){
-        // Updating User's UpVote
-        post = await addUserToUpVoteList(post, user._id);
-    }else if(!isUserInDownVoteList && isUserInUpVoteList){
-        // User Already UpVoted the Post
-        winston.info(`User ${user._id} already UpVoted Post ${post._id}. A user can only do it once`);
-    }else if(isUserInDownVoteList && !isUserInUpVoteList){
-        // User DownVoted before - first remove it and then perform UpVote
-        post = await removeUserFromDownVoteList(post, user._id);
-        post = await addUserToUpVoteList(post, user._id);
-    }else{
-        // Error - The user has already upvoted and downvoted this post - illegal combination
-        winston.error(`The user ${user._id} has already upvoted and downvoted this post. illegal combination!`);
-    }
     try {
-        const result = await post.save();
-        winston.info(`Post ${result._id} was successfully upvoted`);
-        removeEventFromDb(event._id);
+        post = await post.save();
+        if(post) {
+            winston.info(`Post ${post._id} upvotes are updated`);
+            removeEventFromDb(event._id);
+        }
     }catch(error){
         winston.error('Failed upvoting post to DB ' + post);
     }
@@ -223,89 +215,38 @@ async function downvotePostAction(event){
         return;
     }
 
-    // Make sure post exists
-    let post = await Post.findById(event.eventBody[0].postId);
+    // Make sure that post exists in DB and ready to be processed
+    let post = await Post.findOneAndUpdate({_id: event.eventBody[0].postId, isProcessed: false}, {$set: {isProcessed: true}}, {new: true});
     if(!post){
-        winston.error(`Post ${event.eventBody[0].postId} does not exist and therefore can not be updated. ${event}` );
-        return;
+        // Make sure that post exists in DB
+        post = await Post.findById(event.eventBody[0].postId);
+        if(!post){
+            winston.error(`Post ${event.eventBody[0].postId} does not exist and therefore can not be updated. ${event}`);
+            return;
+        }else{
+            const enableEvent = await Event.findOneAndUpdate({_id: event._id}, {isActive: true});
+            if(enableEvent){
+                winston.info(`Event ${event._id} will be processed next cycle`);
+            }else{
+                winston.error(`Failed enabling event ${event._id} for next cycle`);
+            }
+            return;
+        }
     }
 
-    // Check if user already voted before and where
-    const isUserInUpVoteList = (post.upVotes.indexOf(user._id) > -1);
-    const isUserInDownVoteList = (post.downVotes.indexOf(user._id) > -1);
+    post.votes =  await calculateVotes(eventAction.DOWNVOTE, post.votes, user._id);
+    post.rank =  await calculateRank(post.votes[0].upVotes.length, post.votes[0].downVotes.length, post.dateCreated);
+    post.isProcessed = false;
 
-    if(!isUserInDownVoteList && !isUserInUpVoteList){
-        // Updating User's DownVote
-        post = await addUserToDownVoteList(post, user._id);
-    }else if(!isUserInDownVoteList && isUserInUpVoteList){
-        // User UpVoted before - first remove it and then perform DownVote
-        post = await removeUserFromUpVoteList(post, user._id);
-        post = await addUserToDownVoteList(post, user._id);
-    }else if(isUserInDownVoteList && !isUserInUpVoteList){
-        // User Already DownVotes the Post
-        winston.info(`User ${user._id} already DownVoted Post ${post._id}. A user can only do it once`);
-    }else{
-        // Error - The user has already upvoted and downvoted this post - illegal combination
-        winston.error(`The user ${user._id} has already upvoted and downvoted this post. illegal combination!`);
-    }
     try {
-        const result = await post.save();
-        winston.info(`Post ${result._id} was successfully downvoted`);
-        removeEventFromDb(event._id)
+        post = await post.save();
+        if(post) {
+            winston.info(`Post ${post._id} downvotes are updated`);
+            removeEventFromDb(event._id);
+        }
     }catch(error){
-        winston.error('Failed downvoting post to DB ' + post);
+        winston.error('Failed upvoting post to DB ' + post);
     }
-}
-
-
-async function addUserToUpVoteList(post, voterId){
-    // Get UpVotes List
-    let upVotesList = post.upVotes;
-    // Adding the voting user id to the list
-    upVotesList.push(voterId);
-    // Updating the list size
-    post.upVotesCount = upVotesList.length;
-    post.rank = calculateRank(post.upVotesCount, post.downVotesCount, post.dateCreated);
-    console.log(`User ${voterId} upvoted Post ${post._id}. New Rank: ${post.rank}`);
-
-    return post;
-}
-
-async function addUserToDownVoteList(post, voterId){
-    // Get DownVotes List
-    let downVotesList = post.downVotes;
-    // Adding the voting user id to the list
-    downVotesList.push(voterId);
-    // Updating the list size
-    post.downVotesCount = downVotesList.length;
-    post.rank = calculateRank(post.upVotesCount, post.downVotesCount, post.dateCreated);
-    console.log(`User ${voterId} downvoted Post ${post._id}. New Rank: ${post.rank}`);
-
-    return post;
-}
-
-async function removeUserFromUpVoteList(post, voterId){
-    // Get UpVotes List
-    let upVotesList = post.upVotes;
-    // Removing the voting user id from the list
-    upVotesList.remove(voterId);
-    // Updating the list size
-    post.upVotesCount = upVotesList.length;
-    console.log(`User ${voterId}' upvote was removed from Post ${post._id}.`);
-
-    return post;
-}
-
-async function removeUserFromDownVoteList(post, voterId){
-    // Get DownVotes List
-    let downVotesList = post.downVotes;
-    // Removing the voting user id from the list
-    downVotesList.remove(voterId);
-    // Updating the list size
-    post.downVotesCount = downVotesList.length;
-    console.log(`User ${voterId}' downvote was removed from Post ${post._id}.`);
-
-    return post;
 }
 
 async function updateTopResultsInCache(numberOfResults){
@@ -313,7 +254,6 @@ async function updateTopResultsInCache(numberOfResults){
         const posts = await Post.find().sort({ rank: -1}).limit(numberOfResults);
         client.setex("topposts/", 300, JSON.stringify(posts));
         winston.log('Updated TopResults in cache successfully');
-        console.log(posts);
         return true;
     }catch(err){
         winston.error("Failed updated TopResults in cache, Reason: " + err);

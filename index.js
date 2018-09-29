@@ -1,7 +1,6 @@
 const express = require('express');
 const winston = require('winston');
-const topPosts = require('./topPosts');
-const eventHandler = require('./models/eventHandler')
+const eventHandler = require('./Events/eventHandler')
 
 const app = express();
 require('./startup/logging')();
