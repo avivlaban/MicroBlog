@@ -1,3 +1,4 @@
+const validateObjectId = require('../middleware/validateObjectId');
 const {User, validateUser} = require('../models/user');
 const mongoose = require('mongoose');
 const express = require('express');
@@ -9,7 +10,7 @@ router.get('/', async (req, res) => {
     res.send(users);
 });
 
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', validateObjectId, async (req, res) => {
     const { error } = validateUser(req.params.userId);
     if (error) return res.status(400).send(error.details[0].message);
     // Return the list of all users
