@@ -55,6 +55,30 @@ describe('Unit Tests for EventsUtils', () => {
             expect(result[0].upVotes).toEqual(expect.arrayContaining(['d', 'e', 'f', 'a']));
         });
 
+        it('Case 5: Null object', async () => {
+
+            upvoteList = null;
+            votesArray = [{upVotes: upvoteList, downVotes: downVoteList}];
+
+            const result = await calculateVotes(eventAction.DOWNVOTE, votesArray, 'a', 'somePostId');
+
+            expect(result[0].downVotes.length).toBe(3);
+            expect(result[0].downVotes).toEqual(expect.arrayContaining(['a', 'b', 'c']));
+            expect(result[0].upVotes).toEqual(null);
+        });
+
+        it('Case 6: undefined object', async () => {
+
+            upvoteList = undefined;
+            votesArray = [{upVotes: upvoteList, downVotes: downVoteList}];
+
+            const result = await calculateVotes(eventAction.DOWNVOTE, votesArray, 'a', 'somePostId');
+
+            expect(result[0].downVotes.length).toBe(3);
+            expect(result[0].downVotes).toEqual(expect.arrayContaining(['a', 'b', 'c']));
+            expect(result[0].upVotes).toEqual(undefined);
+        });
+
     });
 
 });
