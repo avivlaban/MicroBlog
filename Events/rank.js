@@ -1,5 +1,6 @@
 const epochTime = 1134028003;
 
+// Calculates a Post rank considering UpVotes, DownVotes and Creating time - Redis Algorithm
 function calculateRank(upVotesCounter, downVotesCounter, createTime){
     const voteDiff = upVotesCounter - downVotesCounter;
     const order = Math.log(Math.max(Math.abs(voteDiff), 1), 10);

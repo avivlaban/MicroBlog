@@ -7,14 +7,18 @@ const {calculateRank} = require('./rank');
 const { getRedisClient } = require('../startup/cache');
 const {calculateVotes, eventAction} = require('./eventsUtils');
 
+// Set the timeOut of the event processing to run in seconds
 const timeOutForProccessingEventsInSeconds = 5;
+// Set the timeOut of the 'get top posts' process to run in seconds
 const timeOutGetingTopPostsSeconds = 60;
-
+// Max events allowed to be processed each session
 const maxEventsProcessing = 10;
+// Max Posts allowed in cache
 const maxPostsInCache = 1000;
 
 const client = getRedisClient();
 
+// Main function - runs in loop while processing events and getting top results to store in cache
 module.exports.startListening = async function(){
     winston.info('Started event\'s handler process');
     if(process.env.NODE_ENV != 'test') {
@@ -54,17 +58,17 @@ module.exports.startListening = async function(){
                 events.forEach(function (event) {
                     switch (event.action) {
                         case (eventAction.CREATE):
-                        createPostAction(event);
-                        break;
+                            createPostAction(event);
+                            break;
                         case (eventAction.UPDATE):
-                        updatePostAction(event);
-                        break;
+                            updatePostAction(event);
+                            break;
                         case (eventAction.UPVOTE):
-                        upvotePostAction(event);
-                        break;
+                            votePostAction(eventAction.UPVOTE, event);
+                            break;
                         case (eventAction.DOWNVOTE):
-                        downvotePostAction(event);
-                        break;
+                            votePostAction(eventAction.DOWNVOTE, event);
+                            break;
                         default:
                         winston.error('Unknown action. Event can not be updated: ' + event);
                     }
@@ -73,11 +77,10 @@ module.exports.startListening = async function(){
                 winston.error("Error found: " + error);
             }
         };
-
     }, timeOutForProccessingEventsInSeconds * 1000);
 };
 
-// Not used for now - keep implementation
+// Create a post logic - Getting an event and saving a new post to DB with the event's data provided
 async function createPostAction(event){
     let post;
     let user;
@@ -107,6 +110,7 @@ async function createPostAction(event){
             content: event.eventBody[0].content,
             isProcessed: false
         });
+        // Save event to DB
         post = await post.save();
         winston.info(`A new Post was successfully created: ${post._id}`);
         try{
@@ -123,6 +127,7 @@ async function createPostAction(event){
     return;
 }
 
+// Update a post logic - Getting an event and returning the same event with the new updated title and/or content
 async function updatePostAction(event){
     let post;
     let user;
@@ -144,6 +149,7 @@ async function updatePostAction(event){
         if (post) {
             winston.info(`Post ${post._id} was successfully updated`);
         }
+        //Remove Event from DB
         removeEventFromDb(event._id);
 
     }catch(error){
@@ -152,6 +158,7 @@ async function updatePostAction(event){
 
 }
 
+// Finds an Event in DB and removing it
 function removeEventFromDb(id){
     Event.findOneAndRemove({_id: id}, function(err, res){
         if(res){
@@ -164,24 +171,27 @@ function removeEventFromDb(id){
     });
 }
 
-
-async function upvotePostAction(event){
-    // Make sure user exists
+// Vote a post logic - Getting an event and returning the same event with the new votes calculation
+async function votePostAction(action, event){
+    // Make sure user exists and allowed to vote
     const user = await User.findById(event.eventBody[0].userId);
     if(!user){
         winston.error(`User ${event.eventBody[0].userId} does not exist and therefore can not update post.  ${event}`);
         return;
     }
 
-    // Make sure that post exists in DB and ready to be processed
+    // Make sure that post exists in DB and ready to be processed - if so, we flag the post in DB and lock it from editing
     let post = await Post.findOneAndUpdate({_id: event.eventBody[0].postId, isProcessed: false}, {$set: {isProcessed: true}}, {new: true});
+    // If a post is not found or not ready to be edited
     if(!post){
-        // Make sure that post exists in DB
+        // Make sure that post exists in DB at all
         post = await Post.findById(event.eventBody[0].postId);
         if(!post){
+            // if not - return
             winston.error(`Post ${event.eventBody[0].postId} does not exist and therefore can not be updated. ${event}`);
             return;
         }else{
+            // if yes - we enable the event in order to get it again next cycle
             const enableEvent = await Event.findOneAndUpdate({_id: event._id}, {isActive: true});
             if(enableEvent){
                 winston.info(`Event ${event._id} will be processed next cycle`);
@@ -191,12 +201,13 @@ async function upvotePostAction(event){
             return;
         }
     }
-    console.log("Post to Edit is: " + post);
-    post.votes = await calculateVotes(eventAction.UPVOTE, post.votes, user._id);
+    // Update the new votes and the new rank generated, also we set the post to be ready again to edit
+    post.votes = await calculateVotes(action, post.votes, user._id);
     post.rank =  await calculateRank(post.votes[0].upVotes.length, post.votes[0].downVotes.length, post.dateCreated);
     post.isProcessed = false;
 
     try {
+        // Save the updated post in DB;
         post = await post.save();
         if(post) {
             winston.info(`Post ${post._id} upvotes are updated`);
@@ -207,48 +218,7 @@ async function upvotePostAction(event){
     }
 }
 
-async function downvotePostAction(event){
-    // Make sure user exists
-    const user = await User.findById(event.eventBody[0].userId);
-    if(!user){
-        winston.error(`User ${event.eventBody[0].userId} does not exist and therefore can not update post.  ${event}`);
-        return;
-    }
-
-    // Make sure that post exists in DB and ready to be processed
-    let post = await Post.findOneAndUpdate({_id: event.eventBody[0].postId, isProcessed: false}, {$set: {isProcessed: true}}, {new: true});
-    if(!post){
-        // Make sure that post exists in DB
-        post = await Post.findById(event.eventBody[0].postId);
-        if(!post){
-            winston.error(`Post ${event.eventBody[0].postId} does not exist and therefore can not be updated. ${event}`);
-            return;
-        }else{
-            const enableEvent = await Event.findOneAndUpdate({_id: event._id}, {isActive: true});
-            if(enableEvent){
-                winston.info(`Event ${event._id} will be processed next cycle`);
-            }else{
-                winston.error(`Failed enabling event ${event._id} for next cycle`);
-            }
-            return;
-        }
-    }
-
-    post.votes =  await calculateVotes(eventAction.DOWNVOTE, post.votes, user._id);
-    post.rank =  await calculateRank(post.votes[0].upVotes.length, post.votes[0].downVotes.length, post.dateCreated);
-    post.isProcessed = false;
-
-    try {
-        post = await post.save();
-        if(post) {
-            winston.info(`Post ${post._id} downvotes are updated`);
-            removeEventFromDb(event._id);
-        }
-    }catch(error){
-        winston.error('Failed upvoting post to DB ' + post);
-    }
-}
-
+// Get the current top results from cache sorted and storing it into cache
 async function updateTopResultsInCache(numberOfResults){
     try{
         const posts = await Post.find().sort({ rank: -1}).limit(numberOfResults);

@@ -2,6 +2,7 @@ const Joi = require('joi');
 const mongoose = require('mongoose');
 const {userNameSchema} = require('./user');
 
+// A Post Scheme
 const Post = mongoose.model('Posts', new mongoose.Schema({
     title: {
         type: String, 
@@ -39,6 +40,7 @@ const Post = mongoose.model('Posts', new mongoose.Schema({
     }
   }));
 
+// Validated Post was submitted correctly
 function validatePost(post) {
     const schema = {
         title: Joi.string().min(5).max(50).required(),

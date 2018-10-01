@@ -17,7 +17,7 @@ module.exports.topPostsTestPost1 =
         votes: [{upVotes: [], downVotes: [], upVotesCount: 0, downVotesCount: 0}],
         dateCreated: Date.now(),
         dateUpdated: Date.now(),
-        content: "First Post Title",
+        content: "First Post Content",
         isProcessed: false
     };
 module.exports.topPostsTestPost2 =
@@ -45,6 +45,6 @@ module.exports.topPostsTestPost3 =
         votes: [{upVotes: [], downVotes: [], upVotesCount: 0, downVotesCount: 0}],
         dateCreated: Date.now(),
         dateUpdated: Date.now(),
-        content: "Third Post Title",
+        content: "Third Post Content",
         isProcessed: false
     };

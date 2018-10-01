@@ -4,12 +4,14 @@ const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
 
+// Returns the list of all users
 router.get('/', async (req, res) => {
     // Return the list of all users
     const users = await User.find().sort('-dateCreated');
     res.send(users);
 });
 
+// Get a User data provided userId
 router.get('/:userId', validateObjectId, async (req, res) => {
     const { error } = validateUser(req.params.userId);
     if (error) return res.status(400).send(error.details[0].message);
@@ -20,6 +22,7 @@ router.get('/:userId', validateObjectId, async (req, res) => {
     res.send(user);
 });
 
+// Create a new User - returns the new User Object
 router.post('/create', async (req, res) => {
 
     let user = new User({ 

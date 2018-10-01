@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const mongoose = require('mongoose');
 
+// An Event Scheme
 const Event = mongoose.model('Events', new mongoose.Schema({
     action: {
         type: Number,
@@ -20,17 +21,19 @@ const Event = mongoose.model('Events', new mongoose.Schema({
     }
 }));
 
+// Validates Event with Action Type of CREATE
 function validateCreateEvent(event) {
 
     const schema = {
         title: Joi.string().min(5).max(50).required(),
         content: Joi.string().min(1).max(1000).required(),
-        userId: Joi.string().required()
+        userId: Joi.string().min(5).max(50).required()
     };
 
     return Joi.validate(event, schema);
 };
 
+// Validates Event with Action Type of UPDATE was submitted correctly
 function validateUpdateEvent(event) {
 
     const schema = {
@@ -43,6 +46,7 @@ function validateUpdateEvent(event) {
     return Joi.validate(event, schema);
 };
 
+// Validates Event with Action Type of UPVOTE or DOWNVOTE
 function validateVoteEvent(event) {
 
     const schema = {

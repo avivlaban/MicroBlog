@@ -1,0 +1,49 @@
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:08:40.376Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:08:40.430Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:09:26.809Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:09:26.848Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:27:02.667Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:27:02.707Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:27:21.230Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:27:21.292Z"}
+{"level":"info","message":"No results in cache. Returning results from DB.","timestamp":"2018-10-01T13:27:21.766Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:29:34.473Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:29:34.488Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:29:35.103Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:29:40.286Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:29:40.384Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:29:40.793Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:30:13.296Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:30:13.334Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:30:17.470Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:32:39.811Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:32:39.850Z"}
+{"level":"info","message":"No results in cache. Returning results from DB.","timestamp":"2018-10-01T13:32:46.880Z"}
+{"level":"error","message":"Failed processing User: 5b9f7f65bc49f7703723a31a","timestamp":"2018-10-01T13:32:59.235Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:34:29.312Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:34:29.349Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:41:34.216Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:41:34.338Z"}
+{"level":"info","message":"No results in cache. Returning results from DB.","timestamp":"2018-10-01T13:41:35.001Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:41:35.179Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:43:01.186Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:43:01.204Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:43:01.696Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:43:42.225Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:43:42.240Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:43:42.724Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:45:24.790Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:45:24.804Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:45:25.285Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:45:32.651Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:45:32.689Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:46:04.339Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:46:04.465Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:46:04.858Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:49:10.130Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:49:10.159Z"}
+{"level":"info","message":"No results in cache. Returning results from DB.","timestamp":"2018-10-01T13:49:10.637Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:49:10.821Z"}
+{"level":"info","message":"Listening on port 3000...","timestamp":"2018-10-01T13:50:37.780Z"}
+{"level":"info","message":"Connected to MongoDB...","timestamp":"2018-10-01T13:50:37.796Z"}
+{"level":"info","message":"Returning results from Cache","timestamp":"2018-10-01T13:50:38.283Z"}

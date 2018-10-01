@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const mongoose = require('mongoose');
 
+// A User Scheme
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -31,6 +32,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('Users', userSchema);
 
+// Validates User was submitted correctly
 function validateUser(user) {
   const schema = {
     name: Joi.string().min(3).max(50).required()
