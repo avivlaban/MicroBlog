@@ -1,7 +1,6 @@
 const Joi = require('joi');
 const mongoose = require('mongoose');
 
-const regexIdValidationForDB = '/^[0-9a-fA-F]{24}$/';
 const Event = mongoose.model('Events', new mongoose.Schema({
     action: {
         type: Number,
@@ -37,7 +36,7 @@ function validateUpdateEvent(event) {
     const schema = {
         title: Joi.string().min(5).max(50).required(),
         content: Joi.string().min(1).max(1000).required(),
-        userId: Joi.string().required(),
+        userId: Joi.string().min(5).max(50).required(),
         postId: Joi.string().min(5).max(50).required()
     };
 
@@ -47,7 +46,7 @@ function validateUpdateEvent(event) {
 function validateVoteEvent(event) {
 
     const schema = {
-        userId: Joi.string().required(),
+        userId: Joi.string().min(5).max(50).required(),
         postId: Joi.string().min(5).max(50).required()
     };
 

@@ -2,7 +2,6 @@ const Joi = require('joi');
 const mongoose = require('mongoose');
 const {userNameSchema} = require('./user');
 
-const regexIdValidationForDB = '/^[0-9a-fA-F]{24}$/';
 const Post = mongoose.model('Posts', new mongoose.Schema({
     title: {
         type: String, 
@@ -48,10 +47,6 @@ function validatePost(post) {
   
     return Joi.validate(post, schema);
 };
-
-
-
-
 
   exports.Post = Post; 
   exports.validatePost = validatePost;

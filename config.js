@@ -10,7 +10,8 @@ const dev = {
         name: process.env.DEV_DB_NAME || 'microblog'
     },
     cache: {
-        connectionString: process.env.CACHE_CONNECTION_STRING
+        //connectionString: process.env.CACHE_CONNECTION_STRING
+        connectionString: 'redis://admin:ZJPFRNMVAMMNIPXD@aws-us-east-1-portal.14.dblayer.com:16419'
     }
 };
 const test = {

@@ -1,12 +1,13 @@
 const redis = require("redis");
 const config = require('../config');
-let connectionString = config.cache.connectionString;
+const winston = require('winston');
+let connectionString = process.env.CACHE_CONNECTION_STRING || config.cache.connectionString;
 var client = null;
 
 module.exports.getRedisClient = function(){
-    // caching
+
     if (connectionString === undefined) {
-        winsron.error("Please set the COMPOSE_REDIS_URL environment variable");
+        winston.error("Please set the COMPOSE_REDIS_URL environment variable");
     }
 
     if (connectionString.startsWith("rediss://")) {

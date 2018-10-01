@@ -7,24 +7,29 @@ const {calculateRank} = require('./rank');
 const { getRedisClient } = require('../startup/cache');
 const {calculateVotes, eventAction} = require('./eventsUtils');
 
-const client = getRedisClient();
+const timeOutForProccessingEventsInSeconds = 5;
+const timeOutGetingTopPostsSeconds = 60;
 
-const timeOutForNewPostsCheckInSeconds = 10;
 const maxEventsProcessing = 10;
 const maxPostsInCache = 1000;
 
+const client = getRedisClient();
 
 module.exports.startListening = async function(){
     winston.info('Started event\'s handler process');
+    if(process.env.NODE_ENV != 'test') {
+        setInterval(async function () {
+            // Update Top events in cache
+            updateTopResultsInCache(maxPostsInCache);
+        }, timeOutGetingTopPostsSeconds * 1000);
+    };
 
-    // Executes every ${timeOutForNewPostsCheckInSeconds} seconds
+    // Executes every ${timeOutForProccessingEventsInSeconds} seconds
     setInterval(async function() {
         let events = [];
         let singleEvent;
         let counter = 0;
 
-        // Update Top events in cache
-        updateTopResultsInCache(maxPostsInCache);
         // Get Events to Process from DB
         try{
             do{
@@ -37,21 +42,16 @@ module.exports.startListening = async function(){
             if(events.length > 0) {
                 winston.info('Sucessfully got events from DB');
             }else{
-                winston.info('No Events to update');
+                //winston.info('No Events to update');
             }
         }catch(error){
             winston.error("Failed getting events from DB: " + error);
         }
 
-
-        //console.log("Single Event action: " + JSON.parse(events)[0].action);
-
         //If there are events to process
         if(events){
             try {
                 events.forEach(function (event) {
-
-                    console.log("Event is: " + event);
                     switch (event.action) {
                         case (eventAction.CREATE):
                         createPostAction(event);
@@ -74,9 +74,10 @@ module.exports.startListening = async function(){
             }
         };
 
-    }, timeOutForNewPostsCheckInSeconds * 1000);
-}
+    }, timeOutForProccessingEventsInSeconds * 1000);
+};
 
+// Not used for now - keep implementation
 async function createPostAction(event){
     let post;
     let user;
@@ -152,16 +153,15 @@ async function updatePostAction(event){
 }
 
 function removeEventFromDb(id){
-    // Event.findOneAndRemove({_id: id}, function(result, err){
-    //     if(!err){
-    //         winston.log(`Event ${id} deleted successfully`);
-    //         return true;
-    //     }else{
-    //         winston.error(`Failed deleting event: ${id} with error: ${err}`);
-    //         return false;
-    //     }
-    // });
-    console.log(`Event ${id} deleted successfully`);
+    Event.findOneAndRemove({_id: id}, function(err, res){
+        if(res){
+            winston.log(`Event ${id} deleted successfully`);
+            return true;
+        }else{
+            winston.error(`Failed deleting event: ${id} with error: ${err}`);
+            return false;
+        }
+    });
 }
 
 
@@ -252,8 +252,8 @@ async function downvotePostAction(event){
 async function updateTopResultsInCache(numberOfResults){
     try{
         const posts = await Post.find().sort({ rank: -1}).limit(numberOfResults);
-        client.setex("topposts/", 300, JSON.stringify(posts));
-        winston.log('Updated TopResults in cache successfully');
+        client.setex("top/", 300, JSON.stringify(posts));
+        winston.info('Updated Top Posts in cache successfully');
         return true;
     }catch(err){
         winston.error("Failed updated TopResults in cache, Reason: " + err);
