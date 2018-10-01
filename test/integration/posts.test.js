@@ -21,7 +21,7 @@ describe('Integration Tests', () => {
                 const res = await request(server).get('/api/posts/');
                 expect(res.status).toBe(200);
                 expect(res.body).toEqual({message: welcomeMessage});
-            })
+            });
 
         });
     });
