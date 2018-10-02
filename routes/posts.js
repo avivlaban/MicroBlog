@@ -53,7 +53,6 @@ router.post('/create', async (req, res) => {
     }
 
     // Check if the post is a valid JSON
-    // TODO: split function into a few functions.
     const { error } = validateCreateEvent(req.body);
     if (error) return res.status(consts.HTTP_BAD_REQUEST).send(error.details[0]);
     // Make sure user exists
@@ -71,7 +70,6 @@ router.post('/create', async (req, res) => {
     }
 
     // Create a Post
-    // TODO: change to author
     post = await getNewPostObject(user, req.body.title, req.body.content);
 
     // Save Post in DB

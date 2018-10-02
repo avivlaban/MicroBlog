@@ -1,7 +1,7 @@
 const Joi = require('joi');
 const mongoose = require('mongoose');
 const {userNameSchema} = require('./user');
-
+const {calculateRank} = require('../events/rank');
 const POST_TITLE_MIN_LENGTH = 5;
 const POST_TITLE_MAX_LENGTH = 50;
 const POST_CONTENT_MIN_LENGTH = 1;
@@ -56,7 +56,7 @@ function validatePost(post) {
 };
 
 module.exports.getNewPostObject = function (user, title, content){
-    new Post({
+    return new Post({
         title: title,
         autor: {
             _id: user._id,

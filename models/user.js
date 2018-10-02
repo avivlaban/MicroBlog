@@ -37,7 +37,6 @@ const User = mongoose.model('Users', userSchema);
 
 // Validates User was submitted correctly
 function validateUser(user) {
-    //TODO: consts.
   const schema = {
     name: Joi.string().min(USER_NAME_MIN_LENGTH).max(USER_NAME_MAX_LENGTH).required()
   };

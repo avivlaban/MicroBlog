@@ -36,7 +36,7 @@ router.post('/create', async (req, res) => {
         user = await saveUserToDB(user);
         console.info(`User ${user._id} was saved to DB`);
     }catch(error){
-        console.error(`User ${user._id} was NOT saved to DB`);
+        console.error(`User ${user._id} was NOT saved to DB: ` + error);
     }
 
     res.status(consts.HTTP_OK).send(user);

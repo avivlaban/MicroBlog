@@ -15,7 +15,7 @@ const TIMEOUT_FOR_GETTING_TOP_POSTS_IN_SECONDS = 60;
 // Max events allowed to be processed each session
 const MAX_EVENTS_TO_PROCESS = 10;
 // Max Posts allowed in cache
-const MAX_POSTS_TO_STORE_IN_CHACHE = 1000;
+const MAX_POSTS_TO_STORE_IN_CHACE = 1000;
 
 const client = getRedisClient();
 
@@ -25,7 +25,7 @@ module.exports.startListening = async function () {
     if (process.env.NODE_ENV != consts.APP_TEST_ENV) {
         setInterval(async function () {
             // Update Top events in cache
-            updateTopResultsInCache(MAX_POSTS_TO_STORE_IN_CHACHE);
+            updateTopResultsInCache(MAX_POSTS_TO_STORE_IN_CHACE);
         }, TIMEOUT_FOR_GETTING_TOP_POSTS_IN_SECONDS * 1000);
     }
     ;
@@ -219,7 +219,7 @@ async function votePostAction(action, event) {
         // Save the updated post in DB;
         post = await savePostToDB(post);
         if (post) {
-            winston.info(`Post ${post._id} upvotes are updated`);
+            winston.info(`Post ${post._id} votes are updated`);
             removeEventFromDb(event._id);
         }
     } catch (error) {

@@ -25,3 +25,14 @@ services:
     environment:
      - MONGODB_ROOT_PASSWORD=a1b2c3
     command: mongod --smallfiles --bind_ip_all
+  handler:
+      container_name: handler
+      restart: always
+      build:
+       context: .
+       args:
+         IS_HANDLER: 1
+      links:
+        - mongodb
+      depends_on:
+        - mongodb
