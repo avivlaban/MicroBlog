@@ -1,4 +1,4 @@
-const eventHandler = require('./Events/eventHandler')
+const eventHandler = require('./events/eventHandler')
 
 
 require('./startup/logging')();

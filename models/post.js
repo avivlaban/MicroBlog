@@ -2,6 +2,11 @@ const Joi = require('joi');
 const mongoose = require('mongoose');
 const {userNameSchema} = require('./user');
 
+const POST_TITLE_MIN_LENGTH = 5;
+const POST_TITLE_MAX_LENGTH = 50;
+const POST_CONTENT_MIN_LENGTH = 1;
+const POST_CONTENT_MAX_LENGTH = 1000;
+
 // A Post Scheme
 const Post = mongoose.model('Posts', new mongoose.Schema({
     title: {
@@ -43,12 +48,33 @@ const Post = mongoose.model('Posts', new mongoose.Schema({
 // Validated Post was submitted correctly
 function validatePost(post) {
     const schema = {
-        title: Joi.string().min(5).max(50).required(),
-        content: Joi.string().min(1).max(1000).required()
+        title: Joi.string().min(POST_TITLE_MIN_LENGTH).max(POST_TITLE_MAX_LENGTH).required(),
+        content: Joi.string().min(POST_CONTENT_MIN_LENGTH).max(POST_CONTENT_MAX_LENGTH).required()
     };
   
     return Joi.validate(post, schema);
 };
+
+module.exports.getNewPostObject = function (user, title, content){
+    new Post({
+        title: title,
+        autor: {
+            _id: user._id,
+            name: user.name
+        },
+        rank: calculateRank(0, 0, Date.now()),
+        votes: [{upVotes: [], downVotes: [], upVotesCount: 0, downVotesCount: 0}],
+        dateCreated: Date.now(),
+        dateUpdated: Date.now(),
+        content: content,
+        isProcessed: false
+    });
+};
+
+module.exports.savePostToDB = async function (post){
+    post = await post.save();
+    return post;
+}
 
   exports.Post = Post; 
   exports.validatePost = validatePost;

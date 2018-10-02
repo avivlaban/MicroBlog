@@ -1,5 +1,17 @@
 const Joi = require('joi');
 const mongoose = require('mongoose');
+// Event Title
+const EVENT_TITLE_MIN_LENGTH = 5;
+const EVENT_TITLE_MAX_LENGTH = 50;
+// Event Content
+const EVENT_CONTENT_MIN_LENGTH = 1;
+const EVENT_CONTENT_MAX_LENGTH = 1000;
+// Event User Id
+const EVENT_USER_ID_MIN_LENGTH = 5;
+const EVENT_USER_ID_MAX_LENGTH = 50;
+// Event Post Id
+const EVENT_POST_ID_MIN_LENGTH = 5;
+const EVENT_POST_ID_MAX_LENGTH = 50;
 
 // An Event Scheme
 const Event = mongoose.model('Events', new mongoose.Schema({
@@ -25,8 +37,8 @@ const Event = mongoose.model('Events', new mongoose.Schema({
 function validateCreateEvent(event) {
 
     const schema = {
-        title: Joi.string().min(5).max(50).required(),
-        content: Joi.string().min(1).max(1000).required(),
+        title: Joi.string().min(EVENT_TITLE_MIN_LENGTH).max(EVENT_TITLE_MAX_LENGTH).required(),
+        content: Joi.string().min(EVENT_CONTENT_MIN_LENGTH).max(EVENT_CONTENT_MAX_LENGTH).required(),
         userId: Joi.string().min(5).max(50).required()
     };
 
@@ -37,10 +49,10 @@ function validateCreateEvent(event) {
 function validateUpdateEvent(event) {
 
     const schema = {
-        title: Joi.string().min(5).max(50).required(),
-        content: Joi.string().min(1).max(1000).required(),
-        userId: Joi.string().min(5).max(50).required(),
-        postId: Joi.string().min(5).max(50).required()
+        title: Joi.string().min(EVENT_TITLE_MIN_LENGTH).max(EVENT_TITLE_MAX_LENGTH).required(),
+        content: Joi.string().min(EVENT_CONTENT_MIN_LENGTH).max(EVENT_CONTENT_MAX_LENGTH).required(),
+        userId: Joi.string().min(EVENT_USER_ID_MIN_LENGTH).max(EVENT_USER_ID_MAX_LENGTH).required(),
+        postId: Joi.string().min(EVENT_POST_ID_MIN_LENGTH).max(EVENT_POST_ID_MAX_LENGTH).required()
     };
 
     return Joi.validate(event, schema);
@@ -50,12 +62,17 @@ function validateUpdateEvent(event) {
 function validateVoteEvent(event) {
 
     const schema = {
-        userId: Joi.string().min(5).max(50).required(),
-        postId: Joi.string().min(5).max(50).required()
+        userId: Joi.string().min(EVENT_USER_ID_MIN_LENGTH).max(EVENT_USER_ID_MAX_LENGTH).required(),
+        postId: Joi.string().min(EVENT_POST_ID_MIN_LENGTH).max(EVENT_POST_ID_MAX_LENGTH).required()
     };
 
     return Joi.validate(event, schema);
 };
+
+module.exports.saveEventToDB = async function (event){
+    event = await event.save();
+    return event;
+}
 
 exports.Event = Event;
 exports.validateCreateEvent = validateCreateEvent;

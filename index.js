@@ -13,5 +13,3 @@ const server = app.listen(config.app.port, () => {
 });
 
 module.exports = server;
-
-
