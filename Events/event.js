@@ -13,7 +13,10 @@ const EVENT_USER_ID_MAX_LENGTH = 50;
 const EVENT_POST_ID_MIN_LENGTH = 5;
 const EVENT_POST_ID_MAX_LENGTH = 50;
 
-// An Event Scheme
+/**
+ * Instance of Event scheme is DB
+ * @type {Model} - Event Model in DB
+ */
 const Event = mongoose.model('Events', new mongoose.Schema({
     action: {
         type: Number,
@@ -33,7 +36,11 @@ const Event = mongoose.model('Events', new mongoose.Schema({
     }
 }));
 
-// Validates Event with Action Type of CREATE
+/**
+ * Validates Event with Action Type of CREATE
+ * @param event to verify
+ * @return Joi validation object
+ */
 function validateCreateEvent(event) {
 
     const schema = {
@@ -45,7 +52,11 @@ function validateCreateEvent(event) {
     return Joi.validate(event, schema);
 };
 
-// Validates Event with Action Type of UPDATE was submitted correctly
+/**
+ * Validates Event with Action Type of UPDATE was submitted correctly
+ * @param event to verify
+ * @return Joi validation object
+ */
 function validateUpdateEvent(event) {
 
     const schema = {
@@ -58,7 +69,11 @@ function validateUpdateEvent(event) {
     return Joi.validate(event, schema);
 };
 
-// Validates Event with Action Type of UPVOTE or DOWNVOTE
+/**
+ * Validates Event with Action Type of UPVOTE or DOWNVOTE
+ * @param event to verify
+ * @return Joi validation object
+ */
 function validateVoteEvent(event) {
 
     const schema = {
@@ -69,6 +84,11 @@ function validateVoteEvent(event) {
     return Joi.validate(event, schema);
 };
 
+/**
+ * Save an Event Schema to DB
+ * @param event to save
+ * @return the event saved as returned from DB
+ */
 module.exports.saveEventToDB = async function (event){
     event = await event.save();
     return event;

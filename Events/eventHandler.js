@@ -19,7 +19,10 @@ const MAX_POSTS_TO_STORE_IN_CHACE = 1000;
 
 const client = getRedisClient();
 
-// Main function - runs in loop while processing events and getting top results to store in cache
+/**
+ *  Main function - runs in loop while processing events and getting top results to store in cache
+ * @return {Promise<void>}
+ */
 module.exports.startListening = async function () {
     winston.info('Started event\'s handler process');
     if (process.env.NODE_ENV != consts.APP_TEST_ENV) {
@@ -43,6 +46,11 @@ module.exports.startListening = async function () {
     }, TIMEOUT_FOR_PROCCESSING_EVENTS_IN_SECONDS * 1000);
 };
 
+/**
+ *
+ * @param eventsArray - Current Events Array to add Events to
+ * @return eventArray including the events to process
+ */
 async function populateEvents(eventsArray){
     let singleEvent;
     let counter = 0;
@@ -71,6 +79,11 @@ async function populateEvents(eventsArray){
     return eventsArray;
 }
 
+/**
+ *
+ * @param eventsArray - trigger each event in the Array according to Action (Create, Update, Upvote, Downvote)
+ * @return The Events array after they were handled
+ */
 async function triggerEvents(eventsArray){
     try {
         eventsArray.forEach(function (event) {
@@ -97,7 +110,12 @@ async function triggerEvents(eventsArray){
         return null;
     }
 }
-// Create a post logic - Getting an event and saving a new post to DB with the event's data provided
+
+/**
+ * Create a post logic - Getting an event and saving a new post to DB with the event's data provided
+ * @param event to process
+ * @return {Promise<void>}
+ */
 async function createPostAction(event) {
     let post;
     let user;
@@ -133,7 +151,11 @@ async function createPostAction(event) {
     return;
 }
 
-// Update a post logic - Getting an event and returning the same event with the new updated title and/or content
+/**
+ * Update a post logic - Getting an event and returning the same event with the new updated title and/or content
+ * @param event to process
+ * @return {Promise<void>}
+ */
 async function updatePostAction(event) {
     let post;
     let user;
@@ -164,7 +186,10 @@ async function updatePostAction(event) {
 
 }
 
-// Finds an Event in DB and removing it
+/**
+ * Finds an Event in DB and removing it
+ * @param id to remove
+ */
 function removeEventFromDb(id) {
     Event.findOneAndRemove({_id: id}, function (err, res) {
         if (res) {
@@ -177,7 +202,12 @@ function removeEventFromDb(id) {
     });
 }
 
-// Vote a post logic - Getting an event and returning the same event with the new votes calculation
+/**
+ * Vote a post logic - Getting an event and returning the same event with the new votes calculation
+ * @param action - CREATE, UPDATE, UPVOTE or DOWNVOTE
+ * @param event to process
+ * @return {Promise<void>}
+ */
 async function votePostAction(action, event) {
     // Make sure user exists and allowed to vote
     const user = await User.findById(event.eventBody[0].userId);
@@ -227,7 +257,12 @@ async function votePostAction(action, event) {
     }
 }
 
-// Get the current top results from cache sorted and storing it into cache
+/**
+ * Get the current top results from cache sorted and storing it into cache
+ * @param numberOfResults to get from DB and update in cache
+ * @return {Promise<boolean>}
+ */
+
 async function updateTopResultsInCache(numberOfResults) {
     try {
         const posts = await Post.find().sort({rank: -1}).limit(numberOfResults);

@@ -4,7 +4,10 @@ const mongoose = require('mongoose');
 const USER_NAME_MIN_LENGTH = 3;
 const USER_NAME_MAX_LENGTH = 50;
 
-// A User Scheme
+/**
+ * Instance of User scheme is DB
+ * @type {Model} - User Model in DB
+ */
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -35,7 +38,11 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('Users', userSchema);
 
-// Validates User was submitted correctly
+/**
+ * Validates User was submitted correctly
+ * @param user
+ * @return {*}
+ */
 function validateUser(user) {
   const schema = {
     name: Joi.string().min(USER_NAME_MIN_LENGTH).max(USER_NAME_MAX_LENGTH).required()
@@ -44,6 +51,11 @@ function validateUser(user) {
   return Joi.validate(user, schema);
 }
 
+/**
+ * Save a User Schema to DB
+ * @param user
+ * @return the user saved as returned from DB
+ */
 module.exports.saveUserToDB = async function (user){
     user = await user.save();
     return user;

@@ -8,6 +8,14 @@ module.exports.eventAction = {
     DOWNVOTE: 4,
 }
 
+/**
+ * Calculate the votes
+ * @param action - CREATE, UPDATE, UPVOTE, DOWNVOTE
+ * @param votes - the current votes array
+ * @param voter - the id of the user who is doing the action
+ * @param postId - the id of the post to update
+ * @return The new votes array
+ */
 module.exports.calculateVotes = async function (action, votes, voter, postId) {
     // Make sure we don't get null or undefined
     if(!action && !votes[0].upVotes && !votes[0].downVotes && !voter){
@@ -32,7 +40,13 @@ module.exports.calculateVotes = async function (action, votes, voter, postId) {
 
 }
 
-// Updating the votes according to a UpVote logic
+/**
+ * Updating the votes according to a UpVote logic
+ * @param votes - the current votes array
+ * @param voter - the id of the user who is doing the action
+ * @param postId - the id of the post to update
+ * @return The new votes array
+ */
 async function upVoteAction(votes, voter, postId){
     // Check if user already voted before and where
     let isUserInUpVoteList;
@@ -62,7 +76,13 @@ async function upVoteAction(votes, voter, postId){
     return votes;
 }
 
-// Updating the votes according to a DownVote logic
+/**
+ * Updating the votes according to a DownVote logic
+ * @param votes - the current votes array
+ * @param voter - the id of the user who is doing the action
+ * @param postId - the id of the post to update
+ * @return The new votes array
+ */
 async function downVoteAction(votes, voter, postId){
 
     // Check if user already voted before and where
@@ -93,7 +113,13 @@ async function downVoteAction(votes, voter, postId){
     return votes;
 }
 
-// add a given user to the object's upvote list
+/**
+ * add a given user to the object's upvote list
+ * @param votes - the current votes array
+ * @param voterId - the id of the user who is doing the action
+ * @param postId - the id of the post to update
+ * @return The new votes array
+ */
 async function addUserToUpVoteList(votes, voterId, postId){
     // Get UpVotes List
     let upVotesList = votes[0].upVotes;
@@ -104,7 +130,13 @@ async function addUserToUpVoteList(votes, voterId, postId){
     return votes;
 }
 
-// add a given user to the object's downvote list
+/**
+ * add a given user to the object's downvote list
+ * @param votes - the current votes array
+ * @param voterId - the id of the user who is doing the action
+ * @param postId - the id of the post to update
+ * @return The new votes array
+ */
 async function addUserToDownVoteList(votes, voterId, postId){
     // Get DownVotes List
     let downVotesList = votes[0].downVotes;
@@ -115,7 +147,13 @@ async function addUserToDownVoteList(votes, voterId, postId){
     return votes;
 }
 
-// remove a given user from the object's upvote list
+/**
+ * remove a given user from the object's upvote list
+ * @param votes - the current votes array
+ * @param voterId - the id of the user who is doing the action
+ * @param postId - the id of the post to update
+ * @return The new votes array
+ */
 async function removeUserFromUpVoteList(votes, voterId, postId){
     // Get UpVotes List
     let upVotesList = votes[0].upVotes;
@@ -130,7 +168,13 @@ async function removeUserFromUpVoteList(votes, voterId, postId){
     return votes;
 }
 
-// remove a given user from the object's downvote list
+/**
+ * remove a given user from the object's downvote list
+ * @param votes - the current votes array
+ * @param voterId - the id of the user who is doing the action
+ * @param postId - the id of the post to update
+ * @return The new votes array
+ */
 async function removeUserFromDownVoteList(votes, voterId, postId){
     // Get DownVotes List
     let downVotesList = votes[0].downVotes;

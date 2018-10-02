@@ -4,6 +4,9 @@ const winston = require('winston');
 let connectionString = process.env.CACHE_CONNECTION_STRING || config.cache.connectionString;
 var client = null;
 
+/**
+ * @return {RedisClient|*} A redis client
+ */
 module.exports.getRedisClient = function(){
 
     if (connectionString === undefined) {

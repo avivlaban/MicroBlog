@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
-// Make sure an object Id is valid for mongoDB
+/**
+ * Make sure an object Id is valid for mongoDB queries
+ * @param req
+ * @param res
+ * @param next
+ * @return {*|void}
+ */
 module.exports = function(req, res, next) {
     //TODO: check if req.params exists.
     if(req.body) {

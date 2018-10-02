@@ -7,7 +7,10 @@ const POST_TITLE_MAX_LENGTH = 50;
 const POST_CONTENT_MIN_LENGTH = 1;
 const POST_CONTENT_MAX_LENGTH = 1000;
 
-// A Post Scheme
+/**
+ * Instance of Post scheme is DB
+ * @type {Model} - Post Model in DB
+ */
 const Post = mongoose.model('Posts', new mongoose.Schema({
     title: {
         type: String, 
@@ -45,7 +48,11 @@ const Post = mongoose.model('Posts', new mongoose.Schema({
     }
   }));
 
-// Validated Post was submitted correctly
+/**
+ * Validated Post was submitted correctly
+ * @param post
+ * @return {*}
+ */
 function validatePost(post) {
     const schema = {
         title: Joi.string().min(POST_TITLE_MIN_LENGTH).max(POST_TITLE_MAX_LENGTH).required(),
@@ -55,6 +62,13 @@ function validatePost(post) {
     return Joi.validate(post, schema);
 };
 
+/**
+ * Return new Post Schema
+ * @param user - User to update
+ * @param title
+ * @param content
+ * @return {Model}
+ */
 module.exports.getNewPostObject = function (user, title, content){
     return new Post({
         title: title,
@@ -71,6 +85,11 @@ module.exports.getNewPostObject = function (user, title, content){
     });
 };
 
+/**
+ * Save post to DB
+ * @param post
+ * @return the saved post
+ */
 module.exports.savePostToDB = async function (post){
     post = await post.save();
     return post;
